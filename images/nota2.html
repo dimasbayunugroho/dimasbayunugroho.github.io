@@ -1,0 +1,184 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+  <meta charset="UTF-8">
+  <title>Service</title>
+  <script src="https://cdn.jsdelivr.net/npm/jsbarcode@3.11.5/dist/JsBarcode.all.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/qrcode@1.5.1/build/qrcode.min.js"></script>
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      margin: 20px;
+      background-color: #f2f2f2;
+    }
+    h1 {
+      text-align: center;
+    }
+    .nota-form {
+      background-color: white;
+      padding: 20px;
+      border-radius: 8px;
+      box-shadow: 0 0 10px rgba(0,0,0,0.1);
+      max-width: 800px;
+      margin: auto;
+    }
+    input, button {
+      padding: 8px;
+      margin: 5px;
+    }
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      margin-top: 10px;
+    }
+    table, th, td {
+      border: 1px solid #ccc;
+    }
+    th, td {
+      padding: 8px;
+      text-align: center;
+    }
+    .total {
+      font-weight: bold;
+      text-align: right;
+    }
+    #barcode {
+      display: block;
+      margin: 20px auto;
+    }
+    .info-nota {
+      text-align: center;
+      margin-bottom: 20px;
+    }
+    .ttd {
+      margin-top: 50px;
+      text-align: right;
+      margin-right: 50px;
+    }
+    .ttd p {
+      margin: 0;
+    }
+    #qrcodeTTD {
+      margin-top: 5px;
+    }
+
+    @media print {
+      input, button, label, .form-input, .tambah-input {
+        display: none !important;
+      }
+      body {
+        background-color: white;
+      }
+    }
+  </style>
+</head>
+<body>
+
+  <h1>Service</h1>
+
+  <div class="nota-form">
+    <div class="info-nota">
+      <p><strong>No. Nota:</strong> <span id="noNota"></span></p>
+      <svg id="barcode"></svg>
+    </div>
+
+    <div class="form-input">
+      <label>Nama Pelanggan: <input type="text" id="namaPembeli"></label><br>
+      <label>Tanggal: <input type="date" id="tanggalNota"></label>
+    </div>
+
+    <h3 class="tambah-input">Tambah Sparepart / Layanan</h3>
+    <div class="tambah-input">
+      <label>Nama Item: <input type="text" id="namaSparepart"></label>
+      <label>Harga: <input type="number" id="harga" min="0"></label>
+      <button onclick="tambahItem()">Tambah</button>
+    </div>
+
+    <table id="tabelItem">
+      <thead>
+        <tr>
+          <th>No</th>
+          <th>Nama Item</th>
+          <th>Harga</th>
+        </tr>
+      </thead>
+      <tbody></tbody>
+      <tfoot>
+        <tr>
+          <td colspan="2" class="total">Grand Total:</td>
+          <td id="grandTotal">Rp 0</td>
+        </tr>
+      </tfoot>
+    </table>
+
+    <div class="ttd">
+      <p>Hormat Kami,</p>
+      <canvas id="qrcodeTTD"></canvas>
+    </div>
+
+    <button onclick="window.print()">Cetak Nota</button>
+  </div>
+
+  <script>
+    let no = 1;
+    let grandTotal = 0;
+
+    function generateNoNota() {
+      const today = new Date();
+      const yyyy = today.getFullYear();
+      const mm = String(today.getMonth() + 1).padStart(2, '0');
+      const dd = String(today.getDate()).padStart(2, '0');
+      const nomorUrut = String(Math.floor(Math.random() * 900 + 100));
+      return `SS-${yyyy}${mm}${dd}-${nomorUrut}`;
+    }
+
+    const noNota = generateNoNota();
+    document.getElementById('noNota').innerText = noNota;
+
+    // Barcode untuk nomor nota
+    JsBarcode("#barcode", noNota, {
+      format: "CODE128",
+      width: 2,
+      height: 50,
+      displayValue: true
+    });
+
+    // QR Code tanda tangan digital dengan isi: scpc
+    const isiQRCode = "scpc";
+    QRCode.toCanvas(document.getElementById("qrcodeTTD"), isiQRCode, {
+      width: 100,
+      margin: 1
+    }, function (error) {
+      if (error) console.error(error);
+    });
+
+    function tambahItem() {
+      const nama = document.getElementById('namaSparepart').value;
+      const harga = parseInt(document.getElementById('harga').value);
+
+      if (!nama || isNaN(harga) || harga < 0) {
+        alert("Data belum lengkap atau salah!");
+        return;
+      }
+
+      const tbody = document.querySelector('#tabelItem tbody');
+      const row = document.createElement('tr');
+      row.innerHTML = `
+        <td>${no++}</td>
+        <td>${nama}</td>
+        <td>Rp ${harga.toLocaleString()}</td>
+      `;
+      tbody.appendChild(row);
+
+      grandTotal += harga;
+      document.getElementById('grandTotal').innerText = "Rp " + grandTotal.toLocaleString();
+
+      document.getElementById('namaSparepart').value = '';
+      document.getElementById('harga').value = '';
+    }
+
+    document.getElementById('tanggalNota').valueAsDate = new Date();
+  </script>
+
+</body>
+</html>
